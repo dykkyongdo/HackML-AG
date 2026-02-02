@@ -147,7 +147,7 @@ main.ipynb
 ```
 for training, validation, and generating the submission file
 
-#### Submission Format
+### Submission Format
 The competition expects a CSV like:
 ``` text
 id,urgency_level
