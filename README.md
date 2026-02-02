@@ -40,6 +40,7 @@ This competition frames fraud detection as a **multi-class classification** task
 ---
 
 ## Dataset
+Dataset (Kaggle): https://www.kaggle.com/competitions/fraud-hack-ml-2026/data
 
 - Each row represents a **single transaction**
 - Features include:
@@ -137,12 +138,16 @@ data/
 jupyter notebook
 ```
 Then run:
+``` text
+eda.ipynb
+```
+for exploration and feature hypotheses
+```text
+main.ipynb
+```
+for training, validation, and generating the submission file
 
-eda.ipynb for exploration and feature hypotheses
-
-main.ipynb for training, validation, and generating the submission file
-
-Submission Format
+#### Submission Format
 The competition expects a CSV like:
 ``` text
 id,urgency_level
@@ -153,12 +158,12 @@ id,urgency_level
 ```
 Your pipeline should produce predictions for every id in the test set.
 
-Team
-You (add your name)
+## Team
+- Kirill Markin
 
-Dyk Kyong Do
+- Dyk Kyong Do
 
-Nazar Lytvinchuk
+- Nazar Lytvinchuk
 
-Acknowledgements
+## Acknowledgements
 Thanks to SFU Data Science Student Society for organizing HackML and providing an awesome real-world ML experience.
