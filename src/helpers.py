@@ -30,11 +30,18 @@ def encode_categorical(df, encoder=None):
     if "type" not in df.columns:
         return df, encoder
     if encoder is None:
-        encoder = OneHotEncoder(
+        try:
+            encoder = OneHotEncoder(
+            sparse_output=False,
+            handle_unknown="ignore",
+            drop=None
+        )
+        except TypeError:
+            encoder = OneHotEncoder(
             sparse=False,
             handle_unknown="ignore",
-            drop=None  
-        )
+            drop=None
+     )
         encoded = encoder.fit_transform(df[["type"]])
     else:
         encoded = encoder.transform(df[["type"]])
@@ -251,37 +258,52 @@ def train_lgbm_class_weight(
     }
     return model, metrics, (X_val, y_val)
 
-
-def rf_feature_importance(
+def lgbm_feature_importance(
     df,
     target_col="urgency_level",
-    n_estimators=300,
-    max_depth=20,
-    min_samples_leaf=5,
     random_state=42,
 ):
     X = df.drop(columns=[target_col])
     y = df[target_col]
-    rf = RandomForestClassifier(
-        n_estimators=n_estimators,
-        max_depth=max_depth,
-        min_samples_leaf=min_samples_leaf,
+    lgbm = LGBMClassifier(
+        n_estimators=400,
+        learning_rate=0.05,
+        num_leaves=31,
+        min_data_in_leaf=50,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        reg_lambda=2.0,
         n_jobs=-1,
-        class_weight="balanced_subsample",
         random_state=random_state,
+        device="cpu",         
     )
-    rf.fit(X, y)
+    lgbm.fit(X, y)
+    importances = lgbm.booster_.feature_importance(importance_type="gain")
     importance_df = (
         pd.DataFrame({
             "feature": X.columns,
-            "importance": rf.feature_importances_
+            "importance": importances
         })
         .sort_values("importance", ascending=False)
         .reset_index(drop=True)
     )
-    return importance_df, rf
+    importance_df["importance_norm"] = (importance_df["importance"] / importance_df["importance"].sum())
+    importance_df["importance_pct"] = (round(importance_df["importance_norm"] * 100, 3))
+    importance_df["importance_cum"] = importance_df["importance_pct"].cumsum()
+    importance_df = importance_df.drop(columns=["importance"])
+    return importance_df, lgbm
 
 def remove_weak_features(df, var_list):
     df = df.copy()
     df.drop(columns=var_list, inplace=True, errors="ignore")
     return df
+
+def target_summary_table(df, target_col):
+    counts = df[target_col].value_counts().sort_index()
+    percentages = df[target_col].value_counts(normalize=True).sort_index() * 100
+    summary_df = pd.DataFrame({
+        target_col: counts.index,
+        "count": counts.values,
+        "percentage": percentages.values.round(3)
+    })
+    return summary_df
