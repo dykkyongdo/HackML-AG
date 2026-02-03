@@ -6,25 +6,9 @@ We worked with real-world–style transactions data and applied machine learning
 
 **Key result:** improved **Macro F1 from 0.82 → 0.88 in ~9 hours**.
 
----
+## Project Details
 
-## Table of Contents
-- [Problem](#problem)
-- [Dataset](#dataset)
-- [Evaluation Metric](#evaluation-metric)
-- [Approach](#approach)
-- [Results](#results)
-- [Repo Structure](#repo-structure)
-- [How to Run](#how-to-run)
-- [Submission Format](#submission-format)
-- [Team](#team)
-- [Acknowledgements](#acknowledgements)
-- [Resume Bullets](#resume-bullets)
-- [Citation](#citation)
-
----
-
-## Problem
+### Problem
 
 Financial institutions process millions of transactions daily, but only a small fraction are fraudulent. In practice, fraud teams don’t only ask **“Is this fraud?”** — they decide **how urgently** a transaction should be investigated given limited analyst resources.
 
@@ -39,7 +23,7 @@ This competition frames fraud detection as a **multi-class classification** task
 
 ---
 
-## Dataset
+### Dataset
 Dataset (Kaggle): https://www.kaggle.com/competitions/fraud-hack-ml-2026/data
 
 - Each row represents a **single transaction**
@@ -62,7 +46,7 @@ Dataset (Kaggle): https://www.kaggle.com/competitions/fraud-hack-ml-2026/data
 
 ---
 
-## Evaluation Metric
+### Evaluation Metric
 
 **Primary metric: Macro F1-score**
 
@@ -74,7 +58,7 @@ Macro F1 computes the F1-score for each class independently, then averages them:
 
 ---
 
-## Approach
+### Approach
 
 ### Main Challenge: Extreme Class Imbalance
 ~99.8% of transactions weren’t suspicious, so optimizing for accuracy would lead to a model that ignores minority classes. We focused on techniques that improve minority-class performance under time constraints.
@@ -95,7 +79,7 @@ Our strongest solution used a **LightGBM multi-class classifier** with:
 
 ---
 
-## Results
+### Results
 
 - Started around **Macro F1 ≈ 0.82**
 - Improved to **Macro F1 ≈ 0.88**
@@ -103,7 +87,7 @@ Our strongest solution used a **LightGBM multi-class classifier** with:
 
 ---
 
-## Repo Structure
+### Repo Structure
 
 ```text
 .
@@ -115,7 +99,7 @@ Our strongest solution used a **LightGBM multi-class classifier** with:
 
 ```
 
-## How to Run
+### How to Run
 
 ### 1) Create an environment & install dependencies
 
