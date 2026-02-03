@@ -6,6 +6,7 @@ from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
+from sklearn.ensemble import RandomForestClassifier
 
 def remove_correlations(df, var_list):
     df = df.copy()
@@ -52,6 +53,18 @@ def subset(df, pct):
     df = df.copy()
     subset = df.sample(frac=(pct/100), random_state=42)
     return subset
+
+import pandas as pd
+
+
+def encode_names(df, name_cols):
+    df = df.copy()
+    freq_maps = {}
+    for col in name_cols:
+        freq = df[col].value_counts()
+        freq_maps[col] = freq
+        df[col] = df[col].map(freq).fillna(0).astype("int32")
+    return df, freq_maps
 
 def train_lgbm_default(
     X,
@@ -239,3 +252,36 @@ def train_lgbm_class_weight(
     return model, metrics, (X_val, y_val)
 
 
+def rf_feature_importance(
+    df,
+    target_col="urgency_level",
+    n_estimators=300,
+    max_depth=20,
+    min_samples_leaf=5,
+    random_state=42,
+):
+    X = df.drop(columns=[target_col])
+    y = df[target_col]
+    rf = RandomForestClassifier(
+        n_estimators=n_estimators,
+        max_depth=max_depth,
+        min_samples_leaf=min_samples_leaf,
+        n_jobs=-1,
+        class_weight="balanced_subsample",
+        random_state=random_state,
+    )
+    rf.fit(X, y)
+    importance_df = (
+        pd.DataFrame({
+            "feature": X.columns,
+            "importance": rf.feature_importances_
+        })
+        .sort_values("importance", ascending=False)
+        .reset_index(drop=True)
+    )
+    return importance_df, rf
+
+def remove_weak_features(df, var_list):
+    df = df.copy()
+    df.drop(columns=var_list, inplace=True, errors="ignore")
+    return df
