@@ -5,8 +5,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold, cross_val_score
+from sklearn.pipeline import Pipeline
+from xgboost import XGBClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import SGDClassifier
+from imblearn.ensemble import BalancedRandomForestClassifier
+
 
 def remove_correlations(df, var_list):
     df = df.copy()
@@ -307,3 +312,132 @@ def target_summary_table(df, target_col):
         "percentage": percentages.values.round(3)
     })
     return summary_df
+
+def default_xgboost_cv_f1_score(
+        df,
+        target_col="urgency_level",
+        n_folds = 10,
+):
+    X = df.drop(columns=[target_col])
+    y = df[target_col]
+    xgb = XGBClassifier(
+            objective="multi:softprob",
+            num_class=4,
+            n_estimators=300,   
+            n_jobs=-1,  
+            eval_metric="mlogloss",
+    )
+    cv = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=52)
+    scores = cross_val_score(
+        xgb,
+        X,
+        y,
+        scoring="f1_macro",
+        cv=cv,
+        n_jobs=-1
+    )
+    scores_df = pd.DataFrame([{
+        "mean_macro_f1": float(scores.mean()),
+        "std_macro_f1": float(scores.std(ddof=1)),
+        "var_macro_f1": float(scores.var(ddof=1)),
+    }])
+    return scores_df
+
+def default_lgbm_cv_f1_score(
+        df,
+        target_col="urgency_level",
+        n_folds=10,
+):
+    X = df.drop(columns=[target_col])
+    y = df[target_col]
+    lgbm = LGBMClassifier(
+        objective="multiclass",
+        num_class=4,
+        n_estimators=300,
+        learning_rate=0.05,
+        class_weight="balanced",
+        n_jobs=-1,
+        random_state=52,
+        verbosity=0,
+    )
+    cv = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=52)
+    scores = cross_val_score(
+        lgbm,
+        X,
+        y,
+        scoring="f1_macro",
+        cv=cv,
+        n_jobs=-1
+    )
+    scores_df = pd.DataFrame([{
+        "mean_macro_f1": float(scores.mean()),
+        "std_macro_f1": float(scores.std(ddof=1)),
+        "var_macro_f1": float(scores.var(ddof=1)),
+    }])
+    return scores_df
+
+def default_sgd_cv_f1_score(
+        df,
+        target_col="urgency_level",
+        n_folds=10,
+):
+    X = df.drop(columns=[target_col])
+    y = df[target_col]
+    svm = Pipeline(steps=[
+        ("scaler", StandardScaler(with_mean=False)),
+        ("svm", SGDClassifier(
+            loss="log_loss",              
+            class_weight="balanced",
+            alpha=1e-4,               
+            max_iter=2000,
+            tol=1e-3,
+            random_state=52,
+            n_jobs=-1
+        ))
+    ])
+    cv = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=52)
+    scores = cross_val_score(
+        svm,
+        X,
+        y,
+        scoring="f1_macro",
+        cv=cv,
+        n_jobs=-1
+    )
+    scores_df = pd.DataFrame([{
+        "mean_macro_f1": float(scores.mean()),
+        "std_macro_f1": float(scores.std(ddof=1)),
+        "var_macro_f1": float(scores.var(ddof=1)),
+    }])
+    return scores_df
+
+def default_brf_cv_f1_score(
+        df,
+        target_col="urgency_level",
+        n_folds=10,
+):
+    X = df.drop(columns=[target_col])
+    y = df[target_col]
+    brf = BalancedRandomForestClassifier(
+        n_estimators=300,
+        random_state=52,
+        n_jobs=-1,
+        max_depth=None,
+        min_samples_leaf=1,
+    )
+    cv = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=52)
+    scores = cross_val_score(
+        brf,
+        X,
+        y,
+        scoring="f1_macro",
+        cv=cv,
+        n_jobs=-1
+    )
+    scores_df = pd.DataFrame([{
+        "mean_macro_f1": float(scores.mean()),
+        "std_macro_f1": float(scores.std(ddof=1)),
+        "var_macro_f1": float(scores.var(ddof=1)),
+    }])
+    return scores_df
+
